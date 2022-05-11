@@ -97,8 +97,6 @@ function gameStart(){
     //bgm.play();
     $(document).on("keydown", keyDown);
     $(document).on("keyup", keyUp);
-    $(document).on("touchstart", {passive:false}, touchStart);
-    $(document).on("touchend", {passive:false}, touchEnd);
     $('#backButton').on("touchstart", gameOver);
     drawNextMinos();                                                     //ネクストフィールド描画
     timer1 = setInterval(drawMainField, 10);                            //セットインターバル
@@ -147,39 +145,6 @@ function keyUp(e){                                  //キーが離されたと�
     if(e.key==="ArrowDown" || e.key==="Down"){        //下キー(リリースで落下加速False)
         fastDown = false;
     }
-}
-
-//イベントハンドラー(スマホタップ)
-let startX = 0;
-let startY = 0;
-function touchStart(e){
-    e.preventDefault();
-    startX = e.touches[0].pageX;
-    startY = e.touches[0].pageY;
-
-    let afterMino = currentMino().data.copy();
-    let position = currentMino().getPosition();
-
-    if(startY<500 && startY>200 && startX>85 && startX<165){
-        afterMino.vertices = afterMino.vertices.map(v => new Vector2(-v.y, v.x));
-    }
-    if(startY>200 && startX<80){
-        position.x -= 1;
-    }
-    if(startY>200 && startX>170){
-        position.x += 1;
-    }
-    if(startY>500 && startX>85 && startX<165){
-        fastDown = true;
-    }
-    if(isValidPosition(afterMino, position)){
-        currentMino().data = afterMino;
-        currentMino().position = position;
-    }
-}
-function touchEnd(e){
-    e.preventDefault();
-    fastDown = false;
 }
 
 //高速落下を制御する関数
