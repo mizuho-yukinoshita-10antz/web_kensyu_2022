@@ -1,3 +1,8 @@
+const minoCount = new Vector2(10, 20);
+const minoSize = new Vector2(25, 25);
+const fieldSize = new Vector2(minoSize.x * minoCount.x, minoSize.y * minoCount.y);
+
+
 //サウンドファイルをインスタンス化
 let bgm = new Audio("resource/bgm.wav");
 bgm.addEventListener("ended", () => bgm.play());
@@ -12,15 +17,19 @@ let fastDown = false;  //ダウンキー状態初期値
 let gameSpeed = 500;    //ゲーム速度初期値
 let timer1, timer2, timer3;
 
-//ファーストスクリプト
-window.onload = start;
-function start(){
+window.onload = onLoad;
+
+function clearField() {
     canvas.fillStyle = "#000";
-    canvas.fillRect(0, 0, 250, 500);
+    canvas.fillRect(0, 0, fieldSize.x, fieldSize.y);
+}
+
+function onLoad(){
+    clearField();
     fieldArray = [];            //ゲームフィールド初期化(全部"black")
-    for(let y=0; y<20; y++){
+    for(let y=0; y < minoCount.y; y++){
         let sub = [];
-        for(let x=0; x<10; x++){sub.push("black");}
+        for(let x=0; x < minoCount.x; x++){sub.push("black");}
         fieldArray.push(sub);
     }
     minoArray = Array(4).fill(0).map(() => Mino.randomMino());
@@ -28,31 +37,30 @@ function start(){
 }
 
 //ゲームフィールドをクリアしてから描画する関数
-function fieldDraw(){
-    canvas.fillStyle = "#000";                     //フィールドクリア
-    canvas.fillRect(0, 0, 250, 500);
-    for(let y=0; y<20; y++){                    //フィールド描画
-        for(let x=0; x<10; x++){
+function drawField(){
+    clearField();
+    for(let y=0; y<minoCount.y; y++){                    //フィールド描画
+        for(let x=0; x<minoCount.x; x++){
             canvas.fillStyle = fieldArray[y][x];
-            canvas.fillRect(x*25, y*25, 25, 25);
+            canvas.fillRect(x * minoSize.x, y * minoSize.y, minoSize.x,  minoSize.y);
             canvas.strokeStyle = "black";
-            canvas.strokeRect(x*25, y*25, 25, 25);
+            canvas.strokeRect(x * minoSize.x, y * minoSize.y, minoSize.x,  minoSize.y);
         }
     }
     for(let i=0; i<4; i++){                     //テトロミノ描画
         let data = minoArray[0].data;
         let vertex = data.vertices[i];
         canvas.fillStyle = data.color;
-        let x = (vertex.x + minoArray[0].position.x) * 25;
-        let y = (vertex.y + minoArray[0].position.y) * 25;
-        canvas.fillRect(x, y, 25, 25);
+        let x = (vertex.x + minoArray[0].position.x) * minoSize.x;
+        let y = (vertex.y + minoArray[0].position.y) * minoSize.y;
+        canvas.fillRect(x, y, minoSize.x,  minoSize.y);
         canvas.strokeStyle = "black";
-        canvas.strokeRect(x, y, 25, 25);
+        canvas.strokeRect(x, y, minoSize.x,  minoSize.y);
     }
 }
 
 //ネクストフィールドをクリアして再描画する関数
-function nextDraw(){
+function drawNext(){
     canvas.fillStyle = "#008";
     canvas.fillRect(250, 0, 100, 500);
     for(let i=1; i<4; i++){
@@ -80,8 +88,8 @@ function gameStart(){
     $(document).on("touchstart", {passive:false}, touchStart);
     $(document).on("touchend", {passive:false}, touchEnd);
     $('#backButton').on("touchstart", gameOver);
-    nextDraw();                                                     //ネクストフィールド描画
-    timer1 = setInterval(fieldDraw, 10);                            //セットインターバル
+    drawNext();                                                     //ネクストフィールド描画
+    timer1 = setInterval(drawField, 10);                            //セットインターバル
     timer2 = setInterval(highSpeedDown, 80);
     timer3 = setInterval(normalDown, gameSpeed);
 }
@@ -210,7 +218,7 @@ function fixedMino(){
 function checkLine(){
     let point = [0, 40, 100, 300, 1200];
     let lineCount = 0;
-    for(let i=0; i<20; i++){
+    for(let i=0; i<minoCount.y; i++){
         if(fieldArray[i].indexOf("black")===-1){lineCount++;}
     }
     score += point[lineCount];
@@ -224,7 +232,7 @@ function checkLine(){
     }
     for(let i=0; i<lineCount; i++){
         let sub = [];
-        for(let j=0; j<10; j++){
+        for(let j=0; j<minoCount.x; j++){
             sub.push("black");
         }
         fieldArray.unshift(sub);
@@ -241,12 +249,12 @@ function changeMino(){
     if(!isValidPosition(minoArray[0].data, position)) {
         gameOver();
     }
-    nextDraw();
+    drawNext();
 }
 
 //ゲームオーバー処理の関数
 function gameOver(){
-    fieldDraw();
+    drawField();
     bgm.pause();
     bgm.currentTime = 0;
     //gameOver.play();
