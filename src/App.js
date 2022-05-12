@@ -26,7 +26,7 @@ function setScore(value) {
     _score = value;
     updateScoreText();
 }
-let fastDown = false;  //ダウンキー状態初期値
+let fastDownEnabled = false;  //ダウンキー状態初期値
 let gameSpeed = 500;    //ゲーム速度初期値
 let timer1, timer2, timer3;
 
@@ -43,7 +43,7 @@ function clearMainField() {
 
 function resetGame() {
     setScore(0);
-    fastDown = false;
+    fastDownEnabled = false;
     fieldArray = [];            //ゲームフィールド初期化(全部"black")
     for (let y = 0; y < mainCellCount.y; y++) {
         let sub = [];
@@ -73,7 +73,6 @@ function drawCurrentMino() {
     })
 }
 
-//ゲームフィールドをクリアしてから描画する関数
 function drawMainField(){
     clearMainField();
     for(let y=0; y<mainCellCount.y; y++){
@@ -92,7 +91,6 @@ function clearNextField() {
     canvas.fillRect(mainFieldSize.x, 0, nextFieldSize.x, nextFieldSize.y);
 }
 
-//ネクストフィールドをクリアして再描画する関数
 function drawNextMinos(){
     clearNextField();
     for(let i=1; i<minoArray.length; i++){
@@ -108,7 +106,6 @@ function drawNextMinos(){
     }
 }
 
-//ゲームスタート関数
 function gameStart(){
     resetGame();
 
@@ -119,23 +116,11 @@ function gameStart(){
     $('#backButton').on("touchstart", gameOver);
     drawNextMinos();                                                     //ネクストフィールド描画
     timer1 = setInterval(drawMainField, 10);                            //セットインターバル
-    timer2 = setInterval(highSpeedDown, 80);
+    timer2 = setInterval(fastDown, 80);
     timer3 = setInterval(normalDown, gameSpeed);
 }
 
-//移動(回転)可能判定をする関数
-function isValidPosition(data, position){
-    for(let i=0; i<4; i++) {
-        let destination = Vector2.sum(data.vertices[i], position);
-        if(destination.x < 0 || destination.y < 0 || destination.x > 9 || destination.y > 19 || fieldArray[destination.y][destination.x] !== "black") {
-            return false;
-        }
-    }
-    return true;
-}
-
-//イベントハンドラー(キーボード)
-function keyDown(e){                                //キーが押されたとき
+function keyDown(e){
     let afterMino = currentMino().data.copy();
     let position = currentMino().getPosition();
 
@@ -152,96 +137,71 @@ function keyDown(e){                                //キーが押されたと�
         afterMino.vertices = afterMino.vertices.map(v => new Vector2(v.y, -v.x));
     }
     if(e.key==="ArrowDown" || e.key==="Down"){        //下キー(押下中落下加速True)
-        fastDown = true;
+        fastDownEnabled = true;
     }
 
-    if(isValidPosition(afterMino, position)){
+    if(afterMino.validPosition(position, fieldArray)){
         currentMino().data = afterMino;
         currentMino().position = position;
     }
 }
-function keyUp(e){                                  //キーが離されたとき
-    if(e.key==="ArrowDown" || e.key==="Down"){        //下キー(リリースで落下加速False)
-        fastDown = false;
+
+function keyUp(e) {
+    if(e.key==="ArrowDown" || e.key==="Down"){
+        fastDownEnabled = false;
     }
 }
 
-//高速落下を制御する関数
-function highSpeedDown(){
-    if(fastDown){
-        let afterMino = currentMino().data.copy();
-        let position = currentMino().getPosition();
-        position.y += 1;
-        if(isValidPosition(afterMino, position)){
-            currentMino().data = afterMino;
-            currentMino().position = position;
-            setScore(getScore() + 1);
-            updateScoreText();
-        }
-        else{fixedMino();}
+function normalDown() {
+    if(currentMino().move(new Vector2(0, 1), fieldArray)) {
+        return true;
+    }
+    else {
+        fixCurrentMino();
+        return false;
     }
 }
 
-//自然落下を制御する関数
-function normalDown(){
-    let afterMino = currentMino().data.copy();
-    let position = currentMino().getPosition();
-    position.y += 1;
-    if(isValidPosition(afterMino, position)){
-        currentMino().data = afterMino;
-        currentMino().position = position;
+function fastDown(){
+    if(!fastDownEnabled) {
+        return;
     }
-    else{fixedMino();}
+    if (normalDown()) {
+        setScore(getScore() + 1);
+    }
 }
 
-//フィールドにテトロミノを固定する関数
-function fixedMino(){
-    let beforeX, beforeY, color;
-
-    for(let i=0; i<4; i++){
-        beforeX = currentMino().data.vertices[i].x + currentMino().position.x;
-        beforeY = currentMino().data.vertices[i].y + currentMino().position.y;
-        color = currentMino().data.color;
-        fieldArray[beforeY][beforeX] = color;
-
-    }
-
+function fixCurrentMino(){
+    currentMino().data.vertices.map(vertex => {
+        let position = Vector2.sum(vertex, currentMino().position);
+        fieldArray[position.y][position.x] = currentMino().data.color;
+    })
     checkLine();
     changeMino();
 }
 
-//ラインがそろっているか確認する関数
 function checkLine(){
     let point = [0, 40, 100, 300, 1200];
-    let lineCount = 0;
-    for(let i=0; i<mainCellCount.y; i++){
-        if(fieldArray[i].indexOf("black")===-1){lineCount++;}
-    }
-    setScore(getScore() + point[lineCount]);
-
-    for(let i=19; i>=0; i--){
-        if(fieldArray[i].indexOf("black")===-1){
-            fieldArray.splice(i, 1);
-            deletionAudio.play();
+    fieldArray = fieldArray.filter(line => line.indexOf("black") >= 0);
+    let delta = mainCellCount.y - fieldArray.length;
+    if (delta > 0) {
+        setScore(getScore() + point[delta]);
+        deletionAudio.play();
+        for(let i=0; i<delta; i++){
+            let sub = [];
+            for(let j=0; j<mainCellCount.x; j++){
+                sub.push("black");
+            }
+            fieldArray.unshift(sub);
         }
-    }
-    for(let i=0; i<lineCount; i++){
-        let sub = [];
-        for(let j=0; j<mainCellCount.x; j++){
-            sub.push("black");
-        }
-        fieldArray.unshift(sub);
     }
 }
 
-//固定したテトロミノをリストから削除＆新テトロミノをインスタンス化する関数
 function changeMino(){
     minoArray.shift();
     minoArray.push(Mino.randomMino());
     minoInAudio.play();
-    let position = currentMino().position;
-    position.y += 1;
-    if(!isValidPosition(currentMino().data, position)) {
+    if (!currentMino().move(new Vector2(0, 1), fieldArray)) {
         gameOver();
     }
     drawNextMinos();

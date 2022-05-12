@@ -30,6 +30,17 @@ class MinoData {
         return new MinoData(this.vertices, this.color);
     }
 
+    validPosition(position, fieldArray){
+        for(let i=0; i<4; i++) {
+            let vertexPosition = Vector2.sum(this.vertices[i], position);
+            if(vertexPosition.x < 0 || vertexPosition.y < 0 || vertexPosition.x >= mainCellCount.x || vertexPosition.y >= mainCellCount.y || fieldArray[vertexPosition.y][vertexPosition.x] !== "black") {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 }
 
 //テトロミノクラス
@@ -58,5 +69,14 @@ class Mino {
 
     getPosition() {
         return new Vector2(this.position.x, this.position.y);
+    }
+
+    move(displacement, fieldArray) {
+        let destination = Vector2.sum(this.position, displacement);
+        if(this.data.validPosition(destination, fieldArray)) {
+            this.position = destination;
+            return true;
+        }
+        return false;
     }
 }
