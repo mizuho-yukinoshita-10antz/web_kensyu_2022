@@ -7,15 +7,25 @@ const nextFieldSize = new Vector2(nextCellSize.x * 6, mainFieldSize.y);
 
 
 //サウンドファイルをインスタンス化
-let bgm = new Audio("resource/bgm.wav");
+const audioPath = "resource/audio/";
+let bgm = new Audio(audioPath + "game_bgm.mp3");
 bgm.addEventListener("ended", () => bgm.play());
-let gameOverAudio = new Audio("resource/gameover.wav");
+let gameOverAudio = new Audio(audioPath + "game_over.mp3");
+let minoInAudio = new Audio(audioPath + "mino_in.mp3");
+let deletionAudio = new Audio(audioPath + "deletion.mp3");
 
 let canvas = $("#gameCanvas")[0].getContext("2d");
 
 let fieldArray = [];    //ゲームフィールドの状態を格納
 let minoArray = [];     //操作するテトロミノとNext表示の３つを格納
-let score;              //スコアを格納
+let _score = 0;              //スコアを格納
+function getScore() {
+    return _score;
+}
+function setScore(value) {
+    _score = value;
+    updateScoreText();
+}
 let fastDown = false;  //ダウンキー状態初期値
 let gameSpeed = 500;    //ゲーム速度初期値
 let timer1, timer2, timer3;
@@ -31,16 +41,25 @@ function clearMainField() {
     canvas.fillRect(0, 0, mainFieldSize.x, mainFieldSize.y);
 }
 
-function onLoad(){
-    clearMainField();
+function resetGame() {
+    setScore(0);
+    fastDown = false;
     fieldArray = [];            //ゲームフィールド初期化(全部"black")
-    for(let y=0; y < mainCellCount.y; y++){
+    for (let y = 0; y < mainCellCount.y; y++) {
         let sub = [];
-        for(let x=0; x < mainCellCount.x; x++){sub.push("black");}
+        for (let x = 0; x < mainCellCount.x; x++) {
+            sub.push("black");
+        }
         fieldArray.push(sub);
     }
     minoArray = Array(nextMinoCount + 1).fill(0).map(() => Mino.randomMino());
-    $("#startButton").css("visibility", "visible");  //スタートボタン表示
+}
+
+function onLoad(){
+    clearMainField();
+    let $startButton = $("#startButton");
+    $startButton.css("visibility", "visible");  //スタートボタン表示
+    $startButton.on("click", gameStart);  //スタートボタン表示
 }
 
 function drawCurrentMino() {
@@ -91,10 +110,10 @@ function drawNextMinos(){
 
 //ゲームスタート関数
 function gameStart(){
-    score = 0;
-    fastDown = false;
+    resetGame();
+
     $('#startButton').css("visibility", "hidden");   //スタートボタン非表示
-    //bgm.play();
+    bgm.play();
     $(document).on("keydown", keyDown);
     $(document).on("keyup", keyUp);
     $('#backButton').on("touchstart", gameOver);
@@ -156,7 +175,7 @@ function highSpeedDown(){
         if(isValidPosition(afterMino, position)){
             currentMino().data = afterMino;
             currentMino().position = position;
-            score += 1;
+            setScore(getScore() + 1);
             updateScoreText();
         }
         else{fixedMino();}
@@ -198,13 +217,12 @@ function checkLine(){
     for(let i=0; i<mainCellCount.y; i++){
         if(fieldArray[i].indexOf("black")===-1){lineCount++;}
     }
-    score += point[lineCount];
-    updateScoreText();
+    setScore(getScore() + point[lineCount]);
 
     for(let i=19; i>=0; i--){
         if(fieldArray[i].indexOf("black")===-1){
             fieldArray.splice(i, 1);
-            //delSound.play();
+            deletionAudio.play();
         }
     }
     for(let i=0; i<lineCount; i++){
@@ -220,7 +238,7 @@ function checkLine(){
 function changeMino(){
     minoArray.shift();
     minoArray.push(Mino.randomMino());
-    //inSound.play();
+    minoInAudio.play();
     let position = currentMino().position;
     position.y += 1;
     if(!isValidPosition(currentMino().data, position)) {
@@ -234,7 +252,7 @@ function gameOver(){
     drawMainField();
     bgm.pause();
     bgm.currentTime = 0;
-    //gameOver.play();
+    gameOverAudio.play();
     clearInterval(timer1);
     clearInterval(timer2);
     clearInterval(timer3);
@@ -246,5 +264,5 @@ function gameOver(){
 }
 
 function updateScoreText() {
-    $("#scoreText").html("SCORE: " + score);
+    $("#scoreText").html("SCORE: " + getScore());
 }
