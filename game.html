@@ -5,21 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tetris</title>
-    <link rel="stylesheet" href="stylesheet/index.css">
+    <link rel="stylesheet" href="stylesheet/game.css">
 
 </head>
 <body>
-    <h1 id="title">Tetris</h1>
-
+    <button id="pauseButton">||</button>
+    <div id="scoreText">SCORE:</div>
+    <canvas id="gameCanvas"></canvas>
     <button class="menuButton" id="startButton">START</button>
+    <button class="menuButton" id="titleButton">TITLE</button>
 
-    <p id="authorText">Mizuho Yukinoshita</p>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
             crossorigin="anonymous"></script>
     <script src="src/Model.js" type="text/javascript"></script>
     <script src="src/AppSetting.js" type="text/javascript"></script>
-    <script src="src/IndexHTML.js" type="text/javascript"></script>
-    <script src="src/Index.js" type="text/javascript"></script>
+    <script src="src/GameHTML.js" type="text/javascript"></script>
+    <script src="src/Game.js" type="text/javascript"></script>
 </body>
 </html>

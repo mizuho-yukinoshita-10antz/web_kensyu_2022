@@ -2,7 +2,7 @@ body {
     background-color: #ffffff;
 }
 
-#backButton {
+#pauseButton {
     margin: 0 10px 0 0;
     background-color: #f77;
     font-size: 18px;
@@ -15,12 +15,12 @@ body {
     font-weight: bold;
 }
 
-#startButton {
+.menuButton {
+    visibility: hidden;
+    font-family:monospace;
     font-size: 40px;
     border-radius: 5px;
     background-color: #f77;
     color: #fdd;
     position: absolute;
-    top: 200px;
-    left: 58px;
 }

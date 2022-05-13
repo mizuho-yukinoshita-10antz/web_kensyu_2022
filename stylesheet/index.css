@@ -1,0 +1,24 @@
+body {
+    background-color: #ffffff;
+}
+
+.menuButton {
+    font-family:monospace;
+    font-size: 40px;
+    border-radius: 5px;
+    background-color: #f77;
+    color: #fdd;
+    position: absolute;
+}
+
+#title {
+    font-family: monospace;
+    font-size: 50px;
+    position: absolute;
+}
+
+#authorText {
+    font-family: monospace;
+    font-size: 14px;
+    position: absolute;
+}

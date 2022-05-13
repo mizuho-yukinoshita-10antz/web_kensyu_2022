@@ -1,24 +1,13 @@
-const mainCellCount = new Vector2(10, 20);
-const mainCellSize = new Vector2(25, 25);
-const mainFieldSize = new Vector2(mainCellSize.x * mainCellCount.x, mainCellSize.y * mainCellCount.y);
-const nextMinoCount = 3;
-const nextCellSize = new Vector2(15, 15);
-const nextFieldSize = new Vector2(nextCellSize.x * 6, mainFieldSize.y);
-
-
-//サウンドファイルをインスタンス化
-const audioPath = "resource/audio/";
 let bgm = new Audio(audioPath + "game_bgm.mp3");
 bgm.addEventListener("ended", () => bgm.play());
 let gameOverAudio = new Audio(audioPath + "game_over.mp3");
 let minoInAudio = new Audio(audioPath + "mino_in.mp3");
 let deletionAudio = new Audio(audioPath + "deletion.mp3");
-
 let canvas = $("#gameCanvas")[0].getContext("2d");
+let fieldArray = [];
+let minoArray = [];
 
-let fieldArray = [];    //ゲームフィールドの状態を格納
-let minoArray = [];     //操作するテトロミノとNext表示の３つを格納
-let _score = 0;              //スコアを格納
+let _score = 0;
 function getScore() {
     return _score;
 }
@@ -26,9 +15,9 @@ function setScore(value) {
     _score = value;
     updateScoreText();
 }
-let fastDownEnabled = false;  //ダウンキー状態初期値
-let gameSpeed = 500;    //ゲーム速度初期値
+
 let timer1, timer2, timer3;
+let fastDownEnabled = false;
 
 function currentMino() {
     return minoArray[0];
@@ -44,7 +33,9 @@ function clearMainField() {
 function resetGame() {
     setScore(0);
     fastDownEnabled = false;
-    fieldArray = [];            //ゲームフィールド初期化(全部"black")
+    bgm.currentTime = 0;
+
+    fieldArray = [];
     for (let y = 0; y < mainCellCount.y; y++) {
         let sub = [];
         for (let x = 0; x < mainCellCount.x; x++) {
@@ -52,14 +43,15 @@ function resetGame() {
         }
         fieldArray.push(sub);
     }
-    minoArray = Array(nextMinoCount + 1).fill(0).map(() => Mino.randomMino());
+
+    minoArray = Array(nextMinoCount + 1).fill(0).map(() => Model.randomMino());
 }
 
 function onLoad(){
     clearMainField();
-    let $startButton = $("#startButton");
-    $startButton.css("visibility", "visible");  //スタートボタン表示
-    $startButton.on("click", gameStart);  //スタートボタン表示
+    $("#pauseButton").on("click", pauseGame);
+    $("#titleButton").on("click", () => location.href = "index.html");
+    gameStart();
 }
 
 function drawCurrentMino() {
@@ -106,37 +98,43 @@ function drawNextMinos(){
     }
 }
 
-function gameStart(){
-    resetGame();
 
-    $('#startButton').css("visibility", "hidden");   //スタートボタン非表示
-    bgm.play();
+function resumeGame() {
+    $('.menuButton').css("visibility", "hidden");   //スタートボタン非表示
     $(document).on("keydown", keyDown);
     $(document).on("keyup", keyUp);
-    $('#backButton').on("touchstart", gameOver);
-    drawNextMinos();                                                     //ネクストフィールド描画
-    timer1 = setInterval(drawMainField, 10);                            //セットインターバル
-    timer2 = setInterval(fastDown, 80);
-    timer3 = setInterval(normalDown, gameSpeed);
+    $('#pauseButton').on("click", pauseGame);
+
+    drawNextMinos();
+    bgm.play();
+
+    timer1 = setInterval(drawMainField, 1000 / refreshRate);
+    timer2 = setInterval(fastDown, fastDownInterval);
+    timer3 = setInterval(normalDown, normalDownInterval);
+}
+
+function gameStart(){
+    resetGame();
+    resumeGame();
 }
 
 function keyDown(e){
     let afterMino = currentMino().data.copy();
     let position = currentMino().getPosition();
 
-    if(e.key==="ArrowRight" || e.key==="Right"){      //右キー(右移動)
+    if(e.key==="ArrowRight" || e.key==="Right"){
         position.x += 1;
     }
-    if(e.key==="ArrowLeft" || e.key==="Left"){        //左キー(左移動)
+    if(e.key==="ArrowLeft" || e.key==="Left"){
         position.x -= 1;
     }
-    if(e.key==="ArrowUp" || e.key==="Up"){            //上キー(時計回転)
+    if(e.key==="ArrowUp" || e.key==="Up"){
         afterMino.vertices = afterMino.vertices.map(v => new Vector2(-v.y, v.x));
     }
-    if(e.key===" "){                                 //スペースキー(反時計回転)
+    if(e.key===" "){
         afterMino.vertices = afterMino.vertices.map(v => new Vector2(v.y, -v.x));
     }
-    if(e.key==="ArrowDown" || e.key==="Down"){        //下キー(押下中落下加速True)
+    if(e.key==="ArrowDown" || e.key==="Down"){
         fastDownEnabled = true;
     }
 
@@ -199,7 +197,7 @@ function checkLine(){
 
 function changeMino(){
     minoArray.shift();
-    minoArray.push(Mino.randomMino());
+    minoArray.push(Model.randomMino());
     minoInAudio.play();
     if (!currentMino().move(new Vector2(0, 1), fieldArray)) {
         gameOver();
@@ -207,20 +205,31 @@ function changeMino(){
     drawNextMinos();
 }
 
-//ゲームオーバー処理の関数
-function gameOver(){
+function rebindButton(html, events, handler, htmlString=null) {
+    let button = $(html);
+    button.off(events);
+    button.on(events, handler);
+    if (htmlString !== null) {
+        button.html(htmlString);
+    }
+}
+
+function pauseGame() {
     drawMainField();
     bgm.pause();
-    bgm.currentTime = 0;
-    gameOverAudio.play();
     clearInterval(timer1);
     clearInterval(timer2);
     clearInterval(timer3);
-    $('#startButton').css('visibility', 'visible');   //スタートボタン非表示
     $(document).off("keydown");
     $(document).off("keyup");
-    $(document).off("touchstart");
-    $(document).off("touchend");
+    rebindButton("#startButton", "click", resumeGame, "RESUME");
+    $(".menuButton").css('visibility', 'visible');
+}
+
+function gameOver(){
+    pauseGame();
+    gameOverAudio.play();
+    rebindButton("#startButton", "click", gameStart, "START");
 }
 
 function updateScoreText() {
