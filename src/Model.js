@@ -12,9 +12,9 @@ class Vector2 {
     }
 
     rotate(degree) {
-        let radian = degree / 180 * Math.PI;
-        let cos = Math.cos(radian);
-        let sin = Math.sin(radian);
+        let rad = degree / 180 * Math.PI;
+        let cos = Math.cos(rad);
+        let sin = Math.sin(rad);
         return new Vector2(Math.round(cos * this.x - sin * this.y), Math.round(sin * this.x + cos * this.y));
     }
 }

@@ -10,3 +10,5 @@ const nextCellSize = new Vector2(20, 20);
 const nextFieldSize = new Vector2(nextCellSize.x * 6, mainFieldSize.y);
 
 const audioPath = "/resource/audio/";
+
+const multilinePoints = [0, 40, 60, 100, 200];
