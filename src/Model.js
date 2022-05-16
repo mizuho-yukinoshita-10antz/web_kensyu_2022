@@ -10,14 +10,23 @@ class Vector2 {
     static sum(v1, v2) {
         return new Vector2(v1.x + v2.x, v1.y + v2.y);
     }
+
+    rotate(degree) {
+        let radian = degree / 180 * Math.PI;
+        let cos = Math.cos(radian);
+        let sin = Math.sin(radian);
+        return new Vector2(Math.round(cos * this.x - sin * this.y), Math.round(sin * this.x + cos * this.y));
+    }
 }
 
 class MinoData {
-    vertices = [];
+    vertices = [new Vector2()];
     color = "";
 
     constructor(vertices, color) {
-        this.vertices = Array.from(vertices);
+        if (vertices != null) {
+            this.vertices = Array.from(vertices);
+        }
         this.color = color;
     }
 
@@ -39,11 +48,8 @@ class MinoData {
         }
         return true;
     }
-
-
 }
 
-//テトロミノクラス
 class Mino {
     static types = {
         "Z" : MinoData.forge(-1,-1, 0,-1, 0, 0, 1, 0, "red"),
@@ -56,7 +62,7 @@ class Mino {
     };
 
     position = new Vector2(4, 0)
-    data = null;
+    data = new MinoData();
 
     constructor(data){
         this.data = data.copy();   //７種類の中からランダムに選択
@@ -67,10 +73,6 @@ class Mino {
         return new Mino(allData[Math.floor(Math.random() * allData.length)]);
     }
 
-    getPosition() {
-        return new Vector2(this.position.x, this.position.y);
-    }
-
     move(displacement, fieldArray) {
         let destination = Vector2.sum(this.position, displacement);
         if(this.data.validPosition(destination, fieldArray)) {
@@ -78,5 +80,13 @@ class Mino {
             return true;
         }
         return false;
+    }
+
+    rotate(degree, fieldArray) {
+        let originData = this.data.copy();
+        this.data.vertices = this.data.vertices.map(v => v.rotate(degree));
+        if (!this.data.validPosition(this.position, fieldArray)) {
+            this.data = originData;
+        }
     }
 }

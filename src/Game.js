@@ -5,8 +5,8 @@ let minoInAudio = new Audio(audioPath + "mino_in.mp3");
 let deletionAudio = new Audio(audioPath + "deletion.mp3");
 
 let canvas = $("#gameCanvas")[0].getContext("2d");
-let fieldArray = [];
-let minoArray = [];
+let fieldArray = [[""]];
+let minoArray = [Mino.randomMino()];
 
 let _score = 0;
 function getScore() {
@@ -17,7 +17,7 @@ function setScore(value) {
     updateScoreText();
 }
 
-let timer1, timer2, timer3;
+let refreshTimer, fastDownTimer, normalDownTimer;
 let fastDownEnabled = false;
 
 function currentMino() {
@@ -37,15 +37,12 @@ function resetGame() {
     bgm.currentTime = 0;
 
     fieldArray = [];
-    for (let y = 0; y < mainCellCount.y; y++) {
-        let sub = [];
-        for (let x = 0; x < mainCellCount.x; x++) {
-            sub.push("black");
-        }
-        fieldArray.push(sub);
-    }
+    Array(mainCellCount.y).fill(0).map(() => {
+        fieldArray.push(Array(mainCellCount.x).fill("black"));
+    })
 
-    minoArray = Array(nextMinoCount + 1).fill(0).map(() => Mino.randomMino());
+    minoArray = [Mino.randomMino()];
+    Array(nextMinoCount).fill(0).map(() => minoArray.push(Mino.randomMino()));
 }
 
 function onLoad(){
@@ -68,8 +65,8 @@ function drawCurrentMino() {
 
 function drawMainField(){
     clearMainField();
-    for(let y=0; y<mainCellCount.y; y++){
-        for(let x=0; x<mainCellCount.x; x++){
+    for(let y = 0; y < mainCellCount.y; y++){
+        for(let x = 0; x < mainCellCount.x; x++){
             canvas.fillStyle = fieldArray[y][x];
             canvas.fillRect(x * mainCellSize.x, y * mainCellSize.y, mainCellSize.x,  mainCellSize.y);
             canvas.strokeStyle = "black";
@@ -86,7 +83,8 @@ function clearNextField() {
 
 function drawNextMinos(){
     clearNextField();
-    for(let i=1; i<minoArray.length; i++){
+
+    for(let i = 1; i < minoArray.length; i++){
         let data = minoArray[i].data;
         canvas.fillStyle = data.color;
         data.vertices.map(vertex => {
@@ -102,18 +100,15 @@ function drawNextMinos(){
 
 function resumeGame() {
     $('.menuButton').css("visibility", "hidden");   //スタートボタン非表示
-    $(document).on("keydown", keyDown);
-    $(document).on("keyup", keyUp);
-
-
+    $(document).on("keydown", onKeyDown);
+    $(document).on("keyup", onKeyUp);
     $('#pauseButton').on("click", pauseGame);
 
     drawNextMinos();
 
-
-    timer1 = setInterval(drawMainField, 1000 / refreshRate);
-    timer2 = setInterval(fastDown, fastDownInterval);
-    timer3 = setInterval(normalDown, normalDownInterval);
+    refreshTimer = setInterval(drawMainField, 1000 / refreshRate);
+    fastDownTimer = setInterval(fastDown, fastDownInterval);
+    normalDownTimer = setInterval(normalDown, normalDownInterval);
 
     bgm.play().catch(() => HTMLUtils.onInteractOnce($(document), () => bgm.play()));
 }
@@ -123,33 +118,27 @@ function gameStart(){
     resumeGame();
 }
 
-function keyDown(e){
-    let afterMino = currentMino().data.copy();
-    let position = currentMino().getPosition();
-
+function onKeyDown(e){
     if(e.key==="ArrowRight" || e.key==="Right"){
-        position.x += 1;
+        //position.x += 1;
+        currentMino().move(new Vector2(1, 0), fieldArray);
     }
     if(e.key==="ArrowLeft" || e.key==="Left"){
-        position.x -= 1;
+        //position.x -= 1;
+        currentMino().move(new Vector2(-1, 0), fieldArray);
     }
     if(e.key==="ArrowUp" || e.key==="Up"){
-        afterMino.vertices = afterMino.vertices.map(v => new Vector2(-v.y, v.x));
+        currentMino().rotate(90, fieldArray);
     }
     if(e.key===" "){
-        afterMino.vertices = afterMino.vertices.map(v => new Vector2(v.y, -v.x));
+        currentMino().rotate(-90, fieldArray);
     }
     if(e.key==="ArrowDown" || e.key==="Down"){
         fastDownEnabled = true;
     }
-
-    if(afterMino.validPosition(position, fieldArray)){
-        currentMino().data = afterMino;
-        currentMino().position = position;
-    }
 }
 
-function keyUp(e) {
+function onKeyUp(e) {
     if(e.key==="ArrowDown" || e.key==="Down"){
         fastDownEnabled = false;
     }
@@ -216,9 +205,9 @@ function rebindButton(button, events, handler, htmlString = null) {
 function pauseGame() {
     drawMainField();
     bgm.pause();
-    clearInterval(timer1);
-    clearInterval(timer2);
-    clearInterval(timer3);
+    clearInterval(refreshTimer);
+    clearInterval(fastDownTimer);
+    clearInterval(normalDownTimer);
     $(document).off("keydown");
     $(document).off("keyup");
     rebindButton($("#startButton"), "click", resumeGame, "RESUME");
