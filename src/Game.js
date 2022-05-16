@@ -44,7 +44,7 @@ function resetGame() {
         fieldArray.push(sub);
     }
 
-    minoArray = Array(nextMinoCount + 1).fill(0).map(() => Model.randomMino());
+    minoArray = Array(nextMinoCount + 1).fill(0).map(() => Mino.randomMino());
 }
 
 function onLoad(){
@@ -197,7 +197,7 @@ function checkLine(){
 
 function changeMino(){
     minoArray.shift();
-    minoArray.push(Model.randomMino());
+    minoArray.push(Mino.randomMino());
     minoInAudio.play();
     if (!currentMino().move(new Vector2(0, 1), fieldArray)) {
         gameOver();

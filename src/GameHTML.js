@@ -1,14 +1,5 @@
-let gameCanvas = $("#gameCanvas");
+HTMLUtils.setHTMLWidthHeight($("#gameCanvas"), mainFieldSize.x + nextFieldSize.x, mainFieldSize.y);
 
-let fieldWidth = mainFieldSize.x + nextFieldSize.x;
-gameCanvas.attr("width",fieldWidth);
-gameCanvas.attr("height",mainFieldSize.y);
-gameCanvas.height(mainFieldSize.y);
 
-function setHTMLPosition(html, top, left) {
-    $(html).css("top", `${top}px`);
-    $(html).css("left", `${left}px`);
-}
-
-setHTMLPosition("#startButton", mainFieldSize.y / 2 - 50, mainFieldSize.x / 2 - 60);
-setHTMLPosition("#titleButton", mainFieldSize.y / 2 + 50, mainFieldSize.x / 2 - 50);
+HTMLUtils.setHTMLPosition($("#startButton"), mainFieldSize.y / 2 - 50, mainFieldSize.x / 2 - 60);
+HTMLUtils.setHTMLPosition($("#titleButton"), mainFieldSize.y / 2 + 50, mainFieldSize.x / 2 - 40);

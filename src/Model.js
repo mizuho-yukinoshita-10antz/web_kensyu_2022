@@ -44,7 +44,7 @@ class MinoData {
 }
 
 //テトロミノクラス
-class Model {
+class Mino {
     static types = {
         "Z" : MinoData.forge(-1,-1, 0,-1, 0, 0, 1, 0, "red"),
         "S" : MinoData.forge(0,-1, 1,-1,-1, 0, 0, 0, "green"),
@@ -64,7 +64,7 @@ class Model {
 
     static randomMino() {
         let allData = Object.values(this.types);
-        return new Model(allData[Math.floor(Math.random() * allData.length)]);
+        return new Mino(allData[Math.floor(Math.random() * allData.length)]);
     }
 
     getPosition() {
