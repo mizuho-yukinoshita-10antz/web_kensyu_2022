@@ -1,8 +1,9 @@
 let bgm = new Audio(audioPath + "game_bgm.mp3");
-bgm.addEventListener("ended", () => bgm.play());
+bgm.loop = true;
 let gameOverAudio = new Audio(audioPath + "game_over.mp3");
 let minoInAudio = new Audio(audioPath + "mino_in.mp3");
 let deletionAudio = new Audio(audioPath + "deletion.mp3");
+
 let canvas = $("#gameCanvas")[0].getContext("2d");
 let fieldArray = [];
 let minoArray = [];
@@ -49,8 +50,8 @@ function resetGame() {
 
 function onLoad(){
     clearMainField();
-    $("#pauseButton").on("click", pauseGame);
     $("#titleButton").on("click", () => location.href = "index.html");
+
     gameStart();
 }
 
@@ -103,14 +104,18 @@ function resumeGame() {
     $('.menuButton').css("visibility", "hidden");   //スタートボタン非表示
     $(document).on("keydown", keyDown);
     $(document).on("keyup", keyUp);
+
+
     $('#pauseButton').on("click", pauseGame);
 
     drawNextMinos();
-    bgm.play();
+
 
     timer1 = setInterval(drawMainField, 1000 / refreshRate);
     timer2 = setInterval(fastDown, fastDownInterval);
     timer3 = setInterval(normalDown, normalDownInterval);
+
+    bgm.play().catch(() => HTMLUtils.onInteractOnce($(document), () => bgm.play()));
 }
 
 function gameStart(){
@@ -185,13 +190,8 @@ function checkLine(){
     if (delta > 0) {
         setScore(getScore() + point[delta]);
         deletionAudio.play();
-        for(let i=0; i<delta; i++){
-            let sub = [];
-            for(let j=0; j<mainCellCount.x; j++){
-                sub.push("black");
-            }
-            fieldArray.unshift(sub);
-        }
+        Array(delta).fill(0).map(() => fieldArray.unshift(Array(mainCellCount.x).fill("black")));
+
     }
 }
 
@@ -205,8 +205,7 @@ function changeMino(){
     drawNextMinos();
 }
 
-function rebindButton(html, events, handler, htmlString=null) {
-    let button = $(html);
+function rebindButton(button, events, handler, htmlString = null) {
     button.off(events);
     button.on(events, handler);
     if (htmlString !== null) {
@@ -222,14 +221,15 @@ function pauseGame() {
     clearInterval(timer3);
     $(document).off("keydown");
     $(document).off("keyup");
-    rebindButton("#startButton", "click", resumeGame, "RESUME");
+    rebindButton($("#startButton"), "click", resumeGame, "RESUME");
     $(".menuButton").css('visibility', 'visible');
 }
 
 function gameOver(){
     pauseGame();
+    $("#pauseButton").off("click");
     gameOverAudio.play();
-    rebindButton("#startButton", "click", gameStart, "START");
+    rebindButton($("#startButton"), "click", gameStart, "START");
 }
 
 function updateScoreText() {
