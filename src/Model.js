@@ -39,10 +39,10 @@ class MinoData {
         return new MinoData(this.vertices, this.color);
     }
 
-    validPosition(position, fieldArray){
+    validPosition(position, boardArray){
         for(let i=0; i<4; i++) {
             let vertexPosition = Vector2.sum(this.vertices[i], position);
-            if(vertexPosition.x < 0 || vertexPosition.y < 0 || vertexPosition.x >= mainCellCount.x || vertexPosition.y >= mainCellCount.y || fieldArray[vertexPosition.y][vertexPosition.x] !== "black") {
+            if(vertexPosition.x < 0 || vertexPosition.y < 0 || vertexPosition.x >= mainCellCount.x || vertexPosition.y >= mainCellCount.y || boardArray[vertexPosition.y][vertexPosition.x] !== "black") {
                 return false;
             }
         }
@@ -73,19 +73,19 @@ class Mino {
         return new Mino(allData[Math.floor(Math.random() * allData.length)]);
     }
 
-    move(displacement, fieldArray) {
+    move(displacement, boardArray) {
         let destination = Vector2.sum(this.position, displacement);
-        if(this.data.validPosition(destination, fieldArray)) {
+        if(this.data.validPosition(destination, boardArray)) {
             this.position = destination;
             return true;
         }
         return false;
     }
 
-    rotate(degree, fieldArray) {
+    rotate(degree, boardArray) {
         let originData = this.data.copy();
         this.data.vertices = this.data.vertices.map(v => v.rotate(degree));
-        if (!this.data.validPosition(this.position, fieldArray)) {
+        if (!this.data.validPosition(this.position, boardArray)) {
             this.data = originData;
         }
     }

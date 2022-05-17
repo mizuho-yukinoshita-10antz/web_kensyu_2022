@@ -20,36 +20,18 @@ function setScore(value) {
 let refreshTimer, fastDownTimer, normalDownTimer;
 let fastDownEnabled = false;
 
-function currentMino() {
-    return minoArray[0];
-}
-
 window.onload = onLoad;
-
-function clearMainField() {
-    canvas.fillStyle = "#000";
-    canvas.fillRect(0, 0, mainFieldSize.x, mainFieldSize.y);
-}
-
-function resetGame() {
-    setScore(0);
-    fastDownEnabled = false;
-    bgm.currentTime = 0;
-
-    boardArray = [];
-    Array(mainCellCount.y).fill(0).map(() => {
-        boardArray.push(Array(mainCellCount.x).fill("black"));
-    })
-
-    minoArray = [Mino.randomMino()];
-    Array(nextMinoCount).fill(0).map(() => minoArray.push(Mino.randomMino()));
-}
 
 function onLoad(){
     clearMainField();
     $("#titleButton").on("click", () => location.href = "index.html");
 
     gameStart();
+}
+
+function clearMainField() {
+    canvas.fillStyle = "#000";
+    canvas.fillRect(0, 0, mainFieldSize.x, mainFieldSize.y);
 }
 
 function drawCurrentMino() {
@@ -97,6 +79,43 @@ function drawNextMinos(){
     }
 }
 
+function gameStart(){
+    resetGame();
+    resumeGame();
+}
+
+function gameOver(){
+    pauseGame();
+    $("#pauseButton").off("click");
+    gameOverAudio.play();
+    rebindButton($("#startButton"), "click", gameStart, "START");
+}
+
+function resetGame() {
+    setScore(0);
+    fastDownEnabled = false;
+    bgm.currentTime = 0;
+
+    boardArray = [];
+    Array(mainCellCount.y).fill(0).map(() => {
+        boardArray.push(Array(mainCellCount.x).fill("black"));
+    })
+
+    minoArray = [Mino.randomMino()];
+    Array(nextMinoCount).fill(0).map(() => minoArray.push(Mino.randomMino()));
+}
+
+function pauseGame() {
+    drawMainField();
+    bgm.pause();
+    clearInterval(refreshTimer);
+    clearInterval(fastDownTimer);
+    clearInterval(normalDownTimer);
+    $(document).off("keydown");
+    $(document).off("keyup");
+    rebindButton($("#startButton"), "click", resumeGame, "RESUME");
+    $(".menuButton").css('visibility', 'visible');
+}
 
 function resumeGame() {
     $('.menuButton').css("visibility", "hidden");   //スタートボタン非表示
@@ -111,11 +130,6 @@ function resumeGame() {
     normalDownTimer = setInterval(normalDown, normalDownInterval);
 
     bgm.play().catch(() => HTMLUtils.onInteractOnce($(document), () => bgm.play()));
-}
-
-function gameStart(){
-    resetGame();
-    resumeGame();
 }
 
 function onKeyDown(e){
@@ -184,11 +198,6 @@ function checkLine(){
     }
 }
 
-function calcPoint(num) {
-    let p = num >= multilinePoints.length ? multilinePoints[multilinePoints.length - 1] : multilinePoints[num];
-    return p * num;
-}
-
 function changeMino(){
     minoArray.shift();
     minoArray.push(Mino.randomMino());
@@ -199,6 +208,14 @@ function changeMino(){
     drawNextMinos();
 }
 
+function updateScoreText() {
+    $("#scoreText").html("SCORE: " + getScore());
+}
+
+function currentMino() {
+    return minoArray[0];
+}
+
 function rebindButton(button, events, handler, htmlString = null) {
     button.off(events);
     button.on(events, handler);
@@ -207,25 +224,7 @@ function rebindButton(button, events, handler, htmlString = null) {
     }
 }
 
-function pauseGame() {
-    drawMainField();
-    bgm.pause();
-    clearInterval(refreshTimer);
-    clearInterval(fastDownTimer);
-    clearInterval(normalDownTimer);
-    $(document).off("keydown");
-    $(document).off("keyup");
-    rebindButton($("#startButton"), "click", resumeGame, "RESUME");
-    $(".menuButton").css('visibility', 'visible');
-}
-
-function gameOver(){
-    pauseGame();
-    $("#pauseButton").off("click");
-    gameOverAudio.play();
-    rebindButton($("#startButton"), "click", gameStart, "START");
-}
-
-function updateScoreText() {
-    $("#scoreText").html("SCORE: " + getScore());
+function calcPoint(num) {
+    let p = num >= multilinePoints.length ? multilinePoints[multilinePoints.length - 1] : multilinePoints[num];
+    return p * num;
 }
