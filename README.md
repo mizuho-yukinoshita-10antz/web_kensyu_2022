@@ -1,8 +1,7 @@
 # web_kensyu_2022
 22卒研修Webフロント課題-テトリス
 
-## 起動
-ブラウザーで`index.html`を開く
+### [ゲームスタート](https://mizuho-yukinoshita-10antz.github.io/web_kensyu_2022/index.html)
 
 ## 遊び方
 |  キー   | 機能      |
